@@ -1,5 +1,5 @@
  Simple C Hash Table implementation
- 
+ ===
  
  Description
  This is just a simple hash table that I wrote for use with the IRC bot 'cbot'. It does have various hash functions
