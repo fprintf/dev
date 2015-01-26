@@ -1,3 +1,10 @@
+/*
+ * Fixed size hash table implementation
+ *
+ * Just a quick hash table implementation for use
+ * with the bot.. will probably switch to 
+ * something more standard later..
+ */
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>

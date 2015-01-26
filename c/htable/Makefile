@@ -4,16 +4,20 @@ MAIN=main.c
 PROG=test_htable
 CFLAGS=-O2 -Wall -g
 SHLIB=libhtable.so
+STATICLIB=libhtable.a
 
 .PHONY:	clean 
 
-all: $(OBJ) $(SHLIB) $(PROG)
+all: $(OBJ) $(SHLIB) $(STATICLIB) $(PROG)
 
 clean:
-	$(RM) $(OBJ) $(PROG) $(SHLIB)
+	$(RM) $(OBJ) $(PROG) $(SHLIB) $(STATICLIB)
 
 $(SHLIB): $(OBJ)
 	$(CC) -o $@ $+ -shared 
+
+$(STATICLIB): $(OBJ)
+	$(CC) -o $@ $+ -static 
 
 $(PROG): $(SHLIB) $(MAIN) 
 	$(CC) -o $@ $+ $(CFLAGS) -I. -L. -lhtable
