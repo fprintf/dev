@@ -29,9 +29,11 @@ Feel free to fork this and add additional features options, etc, whatever.
 ## INSTALL
 
 To install permute you simply need to _clone_ it into a directory
+
 `$ git clone http://github.com/fprintf/dev/c/permute permute`
 
 Then enter the directory and build and install the program
+
 ```
 $ cd permute
 $ make
