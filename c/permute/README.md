@@ -30,12 +30,12 @@ Feel free to fork this and add additional features options, etc, whatever.
 
 To install permute you simply need to _clone_ it into a directory
 
-`$ git clone http://github.com/fprintf/dev/c/permute permute`
+`$ git clone http://github.com/fprintf/dev.git fprintfdev`
 
 Then enter the directory and build and install the program
 
 ```
-$ cd permute
+$ cd fprintfdev/c/permute
 $ make
 $ sudo make install
 ```
