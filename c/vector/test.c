@@ -15,6 +15,11 @@ static const struct testdata fake_info[] = {
     {"Nooster", 32},
 };
 
+int print_testdata(struct testdata * item) {
+    printf("name: %s age: %d\n", item->name, item->age);
+    return 1;
+}
+
 int main(int argc, char ** argv)
 {
     struct vector * vec = vector.new(0);
@@ -37,9 +42,13 @@ int main(int argc, char ** argv)
         vector.sindex(vec, i, data);
     }
 
+    /* Print data checking the vector.foreach method */
+    vector.foreach(vec, print_testdata);
+
+    /* Free data checking the vector.entries method */
+    void ** entries = vector.entries(vec);
     for (size_t i = 0; i < vector.size(vec); ++i) {
-        struct testdata * data = vector.index(vec, i);
-        printf("name: %s age: %d\n", data->name, data->age);
+        struct testdata * data = entries[i];
         free(data);
     }
 
