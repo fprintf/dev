@@ -13,11 +13,16 @@ struct testdata {
 };
 
 static const struct testdata fake_info[] = {
-    {"Joel", 15},
-    {"Jackup", 25},
-    {"Nooster", 32},
+    {"Jim", 15},
+    {"John", 25},
+    {"Jacop", 32},
+    {"Fred", 59},
 };
 
+/* Used as a callback vector.foreach below 
+ * NOTE how you can define the parameter as
+ * any pointer, doesn't have to be void *
+ */
 int print_testdata(struct testdata * item) {
     printf("name: %s age: %d\n", item->name, item->age);
     return 1;
@@ -27,7 +32,7 @@ int main(int argc, char ** argv)
 {
     struct vector * vec = vector.new(0);
 
-    /* Test the resizing ability */
+    /* Resize vector */
     for (size_t i = 0; i < 5000; ++i) {
         struct testdata * data = malloc(sizeof *data);
         if (!data) {
@@ -45,20 +50,21 @@ int main(int argc, char ** argv)
         vector.sindex(vec, i, data);
     }
 
-    /* Print data checking the vector.foreach method */
+    /* Print data using the vector.foreach method */
     vector.foreach(vec, print_testdata);
 
-    /* Free data checking the vector.entries method */
+    /* Release our data we created during the resize
+     * and loop through our vector using the raw
+     * entries
+     */
     void ** entries = vector.entries(vec);
     for (size_t i = 0; i < vector.size(vec); ++i) {
         struct testdata * data = entries[i];
         free(data);
     }
 
-    /* Test resize and then accessing an element in between */
-    vector.sindex(vec, 5100, NULL);
-    for (ptrdiff_t i = 4980; i < 5100; ++i)
-        fprintf(stdout, "vec[%zd] = %p\n", i, vector.index(vec,i));
+    /* Release the vector */
+    vector.delete(vec);
 
 	return 0;
 }
