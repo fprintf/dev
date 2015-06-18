@@ -12,11 +12,6 @@ struct vector_api {
     /* Accessors */
     size_t (*size)(struct vector *);  /* Return number of elements in vector */
 
-    /* Loop access/raw access */
-    void ** (*entries)(struct vector *);
-    /* callback should return 0 if you want to exit the loop early */
-    void (*foreach)(struct vector *, int (*callback)(void * item)); 
-
     /* Stack based access */
     void * (*push)(struct vector *, void * data); /* Append to end of vector */
     void * (*pop)(struct vector *);               /* Remove from end of vector */

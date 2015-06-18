@@ -79,23 +79,6 @@ void * vector_index(struct vector * vec, size_t index)
 {
     return index >= vec->size ? NULL : vec->data[index];
 }
-void ** vector_entries(struct vector * vec) 
-{
-    return vec->data;
-}
-
-/******************************************************************
- * Loop access
- ******************************************************************/
-void vector_foreach(struct vector * vec, int (*callback)(void * item))
-{
-    for (size_t index = 0; index < vec->size; ++index) {
-        /* End prematurely if we're told by the callback */
-        if (!callback(vec->data[index]))
-            break;
-    }
-}
-
 
 /******************************************************************
  * Manipulation
@@ -159,9 +142,6 @@ const struct vector_api vector = {
     .new = vector_new,
     .delete = vector_delete,
     .size = vector_size,
-
-    .entries = vector_entries,
-    .foreach = vector_foreach,
 
     .push = vector_push,
     .pop = vector_pop,

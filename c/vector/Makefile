@@ -1,25 +1,28 @@
 SRC=vector.c
 CFLAGS=-O2 --std=c99 -Wall -pedantic
+SHLIBHEADER=vector.h
 SHLIB=libvector.so
 SHLIBINC=-L. -lvector
-EXAMPLES=vector_example
-TEST=tests
+TEST=testlibvec
+INSTALLPREFIX=../share
+
+.PHONY: all test clean install
 
 all: $(SHLIB) 
 
-test: $(SHLIB) $(TEST)
-	LD_LIBRARY_PATH=. ./$(TEST)
+test: $(TEST)
 
-examples: $(EXAMPLES)
+install: $(SHLIB) 
+	cp $(SHLIB) $(INSTALLPREFIX)/lib/
+	cp $(SHLIBHEADER) $(INSTALLPREFIX)/include/
+
 
 $(SHLIB): $(SRC)
 	$(CC) -o $@ -fPIC -shared $(CFLAGS) $+
 
-$(EXAMPLES): example.c
+$(TEST): test.c
 	$(CC) -o $@ $(SHLIBINC) $(CFLAGS) $+
-
-$(TEST): tests.c
-	$(CC) -o $@ $(SHLIBINC) $(CFLAGS) $+
+	LD_LIBRARY_PATH=. ./$(TEST)
 
 clean: $(SHLIB)
-	$(RM) -f $(SHLIB) $(EXAMPLES) $(TEST)
+	$(RM) -f $(SHLIB) $(TEST)
