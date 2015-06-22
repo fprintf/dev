@@ -11,18 +11,29 @@
 #include <assert.h>
 #include <string.h>
 
+#include <sys/queue.h>
+
 #include "htable.h"
+
 
 static const struct hentry {
     char * key; 
     size_t key_sz; 
     struct hentry * next;
+    TAILQ_ENTRY(hentry) tailq_entries;     /* Entry for traversal based list */
     void * data;
 } hentry_initializer;
 
+/* Linked list structure to keep a list
+ * of the entries in the hash table.
+ *
+ * This is used traverse the hash table iteratively
+ * in a quick manner
+ */
 static const struct htable {
     struct hentry ** tbl; /* this allows us to allocate each entry individually, we just store a table of pointers */
     size_t tbl_size;
+    TAILQ_HEAD(hentry_list, hentry) list;
 
     /* Stats */
     size_t tbl_direct, tbl_linked, tbl_total;
@@ -63,6 +74,8 @@ struct htable * htable_new(size_t size)
         if ( !(tbl = malloc(sizeof *tbl)) ) 
             break;
         *tbl = htable_initializer;
+
+        TAILQ_INIT(&tbl->list); // Initialize our TAILQ_ head
         /* Find next power of 2 larger then 'size' */
         do nsize *= 2; while (size >>= 1); /* there is a faster method but even with 1000bit int this wouldn't take very long */
         tbl->tbl_size = nsize;
@@ -81,25 +94,19 @@ struct htable * htable_new(size_t size)
 
 void htable_free_cb(struct htable * htab, void (*cb)(const char * key, void * data))
 {
-    size_t i;
     assert(htab != NULL);
 
-    /* Free each entry..(expensive!!) :( */
-    for (i = 0; i < htab->tbl_size; ++i) 
-        if (htab->tbl[i]) {
-            /* Free linked list in each entry, and key for each entry */
-            struct hentry * p = htab->tbl[i], * tmp;
+    /* Free each entry..(using linked list) */
+    struct hentry * p;
+    while (!TAILQ_EMPTY(&htab->list)) {
+        p = TAILQ_FIRST(&htab->list);
+        TAILQ_REMOVE(&htab->list, p, tailq_entries);
 
-            while (p) {
-                tmp = p->next;
-                /* Call to our user cleanup function, if any */
-                if (cb)
-                    cb(p->key, p->data);
-                free(p->key);
-                free(p);
-                p = tmp;
-            }
-        }
+        if (cb) 
+            cb(p->key, p->data);
+        free(p->key);
+        free(p);
+    }
     free(htab->tbl);
     free(htab);
 }
@@ -196,12 +203,16 @@ static void * htable_store(struct htable * htab, const char * key, void * data)
             ++htab->tbl_direct;
             ++htab->tbl_total;
             //printf("storing '%s' at '%lu'\n", key, idx);
+            // Insert entry at the end of the traversal list
+            TAILQ_INSERT_TAIL(&htab->list, ne, tailq_entries);
         } else if (!found) {
             //printf("'%s' -> linked '%s'\n", he->key, key);
             ne->next = he->next;
             he->next = ne;
             ++htab->tbl_linked;
             ++htab->tbl_total;
+            // Insert entry at the end of the traversal list
+            TAILQ_INSERT_TAIL(&htab->list, ne, tailq_entries);
         } else { /* key already exists, free new item but update data object */
             free(ne->key);
             free(ne);
@@ -242,6 +253,8 @@ static void * htable_delete(struct htable * htab, const char * key)
             --htab->tbl_total;
         if (le) --htab->tbl_linked, le->next = he->next; /* we might be deleting in center of list */
         else --htab->tbl_direct, htab->tbl[idx] = NULL;
+        // Remove the entry from the traversal list
+        TAILQ_REMOVE(&htab->list, he, tailq_entries);
         free(he->key);
         free(he);
     }
@@ -249,23 +262,18 @@ static void * htable_delete(struct htable * htab, const char * key)
     return rdata;
 }
 
-/* Note, this can be an expensive call if we have a very large hash table */
+/*
+ * Iterate over the hash table using the TAILQ
+ * this is efficient but the order is not gauranteed
+ * at to be consistent
+ */
 static void htable_foreach(struct htable * htab, int (*cb)(const char * key, void * data))
 {
-    size_t i;
     struct hentry * he;
 
-    for (i = 0; i < htab->tbl_size; ++i) {
-        he = htab->tbl[i];
-        /* Empty, continue on */
-        if (!he) continue;
-
-        /* Execute our callback for each entry, including linked list entries.. */
-        while (he) {
-            if (cb(he->key, he->data)) /* non zero return indicates we should end here */
-                break;
-            he = he->next;
-        }
+    TAILQ_FOREACH(he, &htab->list, tailq_entries) {
+        if (cb(he->key, he->data)) /* non zero return indicates we should end here */
+            break;
     }
 }
 
