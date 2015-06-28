@@ -135,6 +135,20 @@ void * vector_pop(struct vector * vec)
     return data;
 }
 
+
+/*
+ * Return the top element on the vector without popping
+ */
+void * vector_top(struct vector * vec)
+{
+    void * data = NULL;
+
+    if (vec->size > 0)
+        data = vec->data[vec->size - 1];
+
+    return data;
+}
+
 /******************************************************************
  * Vector API linkage
  ******************************************************************/
@@ -145,6 +159,7 @@ const struct vector_api vector = {
 
     .push = vector_push,
     .pop = vector_pop,
+    .top = vector_top,
 
     .index = vector_index,
     .sindex = vector_sindex,
