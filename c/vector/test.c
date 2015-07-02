@@ -15,12 +15,33 @@ static const struct testdata fake_info[] = {
     {"Nooster", 32},
 };
 
+static size_t global_test_count, global_test_failures;
+#define OK(test, label) do {                                                    \
+    ++global_test_count;                                                        \
+    if (!(test)) {                                                              \
+        ++global_test_failures;                                                 \
+        fprintf(stdout, "test #%zu '%s' failed\n", global_test_count, label);   \
+    } else {                                                                    \
+        fprintf(stdout, "test #%zu '%s' ok\n", global_test_count, label);       \
+    }                                                                           \
+} while(0)
+
+#define TEST_REPORT(...) do {  \
+    if (global_test_failures)         \
+        fprintf(stderr, "%zu/%zu test(s) failed -- see above for more information\n",  \
+            global_test_failures, global_test_count);      \
+    else                                  \
+        fprintf(stdout, "All %zu tests passed! OK\n", global_test_count); \
+} while(0)
+
 int main(int argc, char ** argv)
 {
     struct vector * vec = vector.new(0);
 
+    OK(vec != NULL, "struct vector * created");
+
     /* Test the resizing ability */
-    for (size_t i = 0; i < 5000; ++i) {
+    for (size_t i = 0; i < 10; ++i) {
         struct testdata * data = malloc(sizeof *data);
         if (!data) {
             perror("malloc");
@@ -35,18 +56,13 @@ int main(int argc, char ** argv)
         }
 
         vector.sindex(vec, i, data);
+        OK(vector.top(vec) == vector.index(vec, vector.size(vec) - 1), "does vector.top == vector.index(vec, size - 1)");
+        struct testdata * element = vector.top(vec);
+        fprintf(stderr, "name: %s age: %i\n", element->name, element->age);
+        OK(vector.top(vec) != vector.index(vec, vector.size(vec) - 2), "does vector.top != vector.index(vec, size - 2)");
     }
 
-    for (size_t i = 0; i < vector.size(vec); ++i) {
-        struct testdata * data = vector.index(vec, i);
-        printf("name: %s age: %d\n", data->name, data->age);
-        free(data);
-    }
-
-    /* Test resize and then accessing an element in between */
-    vector.sindex(vec, 5100, NULL);
-    for (ptrdiff_t i = 4980; i < 5100; ++i)
-        fprintf(stdout, "vec[%zd] = %p\n", i, vector.index(vec,i));
+    TEST_REPORT();
 
 	return 0;
 }
